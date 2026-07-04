@@ -10,3 +10,7 @@ export function generateAccessToken(userId: string) {
 export function generateRefreshToken(userId: string) {
   return jwt.sign({ sub: userId }, REFRESH_SECRET, { expiresIn: '7d' })
 }
+
+export function verifyRefreshToken(token: string) {
+  return jwt.verify(token, REFRESH_SECRET) as { sub: string }
+}

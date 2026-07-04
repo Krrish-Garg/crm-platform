@@ -2,8 +2,8 @@ import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import { PrismaClient } from '../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { registerSchema, loginSchema } from '../validators/auth.validator'
-import { generateAccessToken, generateRefreshToken } from '../lib/jwt'
+import { registerSchema, loginSchema, refreshSchema } from '../validators/auth.validator'
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../lib/jwt'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
@@ -99,4 +99,51 @@ export async function me(req: Request & { userId?: string }, res: Response) {
   }
 
   return res.status(200).json({ user })
+}
+
+
+export async function refresh(req: Request, res: Response) {
+  const parsed = refreshSchema.safeParse(req.body)
+
+  if (!parsed.success) {
+    return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
+  }
+
+  const { refreshToken } = parsed.data
+
+  let payload: { sub: string }
+  try {
+    payload = verifyRefreshToken(refreshToken)
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired refresh token' })
+  }
+
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+  })
+
+  if (!storedToken || storedToken.revokedAt) {
+    return res.status(401).json({ error: 'Refresh token has been revoked' })
+  }
+
+  const newAccessToken = generateAccessToken(payload.sub)
+
+  return res.status(200).json({ accessToken: newAccessToken })
+}
+
+export async function logout(req: Request, res: Response) {
+  const parsed = refreshSchema.safeParse(req.body)
+
+  if (!parsed.success) {
+    return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
+  }
+
+  const { refreshToken } = parsed.data
+
+  await prisma.refreshToken.updateMany({
+    where: { token: refreshToken, revokedAt: null },
+    data: { revokedAt: new Date() },
+  })
+
+  return res.status(200).json({ message: 'Logged out successfully' })
 }
