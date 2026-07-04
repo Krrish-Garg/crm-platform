@@ -24,3 +24,42 @@ A production-grade CRM with AI-assisted lead management, scheduling, and follow-
 **Validation:** Zod
 
 ## Project Structure
+apps/
+web/    – React frontend
+api/    – Express backend
+packages/
+shared/ – shared types (planned)
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20+
+- PostgreSQL 18+
+
+### Backend setup
+
+```bash
+cd apps/api
+npm install
+# Create a .env file with DATABASE_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
+npx prisma migrate dev
+npm run dev
+```
+
+### Frontend setup
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+## API Endpoints (current)
+
+| Method | Endpoint | Description | Auth required |
+|--------|----------|--------------|----------------|
+| POST | `/api/auth/register` | Create a new user | No |
+| POST | `/api/auth/login` | Log in, receive tokens | No |
+| GET | `/api/auth/me` | Get current user | Yes |
+| POST | `/api/auth/refresh` | Exchange refresh token for new access token | No |
+| POST | `/api/auth/logout` | Revoke a refresh token | No |
