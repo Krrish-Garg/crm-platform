@@ -27,7 +27,7 @@ model User {
 
   passwordResetTokens PasswordResetToken[]
   refreshTokens       RefreshToken[]
-
+  leads Lead[]
   @@map("users")
 }
 
@@ -55,4 +55,30 @@ model RefreshToken {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+enum LeadStatus {
+  COLD
+  WARM
+  HOT
+  WON
+  LOST
+}
+
+model Lead {
+  id         String     @id @default(uuid())
+  name       String
+  email      String
+  phone      String?
+  company    String?
+  status     LeadStatus @default(COLD)
+  score      Int        @default(0)
+  source     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("leads")
 }
