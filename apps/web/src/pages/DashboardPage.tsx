@@ -12,12 +12,16 @@ function DashboardPage() {
     try {
       await api.post('/auth/logout', { refreshToken })
     } catch (err) {
-      // Even if this fails (e.g., token already expired), we still want to log the user out locally
       console.error('Logout request failed:', err)
     } finally {
       clearAuth()
       navigate('/login')
     }
+  }
+
+  async function handleFetchMe() {
+    const response = await api.get('/auth/me')
+    console.log('Fetched user:', response.data)
   }
 
   return (
@@ -31,6 +35,12 @@ function DashboardPage() {
           className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
         >
           Log out
+        </button>
+        <button
+          onClick={handleFetchMe}
+          className="mt-4 ml-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          Fetch /me
         </button>
       </div>
     </div>
