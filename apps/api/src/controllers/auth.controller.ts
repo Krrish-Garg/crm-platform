@@ -15,7 +15,8 @@ export async function register(req: Request, res: Response) {
     return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
   }
 
-  const { email, password } = parsed.data
+  const { password } = parsed.data
+  const email = parsed.data.email.toLowerCase().trim()
 
   const existingUser = await prisma.user.findUnique({ where: { email } })
   if (existingUser) {
@@ -47,7 +48,8 @@ export async function login(req: Request, res: Response) {
     return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
   }
 
-  const { email, password } = parsed.data
+  const { password } = parsed.data
+  const email = parsed.data.email.toLowerCase().trim()
 
   const user = await prisma.user.findUnique({ where: { email } })
 
