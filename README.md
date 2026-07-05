@@ -24,11 +24,10 @@ A production-grade CRM with AI-assisted lead management, scheduling, and follow-
 **Validation:** Zod
 
 ## Project Structure
-apps/
-web/    – React frontend
-api/    – Express backend
-packages/
-shared/ – shared types (planned)
+
+- apps/web – React frontend
+- apps/api – Express backend
+- packages/shared – shared types (planned)
 
 ## Getting Started
 
