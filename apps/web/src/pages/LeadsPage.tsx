@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getLeads } from '../lib/leads.api'
 import CreateLeadModal from '../components/CreateLeadModal'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { getLeads, updateLead, deleteLead, type Lead } from '../lib/leads.api'
 
 function LeadsPage() {
   const [page, setPage] = useState(1)
@@ -19,6 +19,32 @@ function LeadsPage() {
         search: search || undefined,
       }),
   })
+  const queryClient = useQueryClient()
+
+const statusMutation = useMutation({
+  mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
+    updateLead(id, { status }),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['leads'] })
+  },
+})
+
+const deleteMutation = useMutation({
+  mutationFn: deleteLead,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['leads'] })
+  },
+})
+
+function handleStatusChange(id: string, newStatus: Lead['status']) {
+  statusMutation.mutate({ id, status: newStatus })
+}
+
+function handleDelete(id: string, name: string) {
+  if (window.confirm(`Delete lead "${name}"? This cannot be undone.`)) {
+    deleteMutation.mutate(id)
+  }
+}
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading leads...</div>
@@ -81,19 +107,40 @@ function LeadsPage() {
               <th className="text-left px-4 py-2 text-sm font-medium text-gray-700">Company</th>
               <th className="text-left px-4 py-2 text-sm font-medium text-gray-700">Status</th>
               <th className="text-left px-4 py-2 text-sm font-medium text-gray-700">Score</th>
+              <th className="text-left px-4 py-2 text-sm font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {data?.leads.map((lead) => (
-              <tr key={lead.id} className="border-t border-gray-100">
-                <td className="px-4 py-2 text-sm text-gray-900">{lead.name}</td>
-                <td className="px-4 py-2 text-sm text-gray-600">{lead.email}</td>
-                <td className="px-4 py-2 text-sm text-gray-600">{lead.company || '—'}</td>
-                <td className="px-4 py-2 text-sm">{lead.status}</td>
-                <td className="px-4 py-2 text-sm text-gray-600">{lead.score}</td>
-              </tr>
-            ))}
-          </tbody>
+  {data?.leads.map((lead) => (
+    <tr key={lead.id} className="border-t border-gray-100">
+      <td className="px-4 py-2 text-sm text-gray-900">{lead.name}</td>
+      <td className="px-4 py-2 text-sm text-gray-600">{lead.email}</td>
+      <td className="px-4 py-2 text-sm text-gray-600">{lead.company || '—'}</td>
+      <td className="px-4 py-2 text-sm">
+        <select
+          value={lead.status}
+          onChange={(e) => handleStatusChange(lead.id, e.target.value as Lead['status'])}
+          className="border border-gray-300 rounded px-2 py-1 text-sm"
+        >
+          <option value="COLD">Cold</option>
+          <option value="WARM">Warm</option>
+          <option value="HOT">Hot</option>
+          <option value="WON">Won</option>
+          <option value="LOST">Lost</option>
+        </select>
+      </td>
+      <td className="px-4 py-2 text-sm text-gray-600">{lead.score}</td>
+      <td className="px-4 py-2 text-sm">
+        <button
+          onClick={() => handleDelete(lead.id, lead.name)}
+          className="text-red-600 hover:text-red-800 text-sm"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
         </table>
 
         {data && (
