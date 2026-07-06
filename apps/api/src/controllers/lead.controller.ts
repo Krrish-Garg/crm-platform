@@ -133,3 +133,34 @@ export async function deleteLead(req: Request, res: Response) {
 
   return res.status(204).send()
 }
+
+export async function getLeadStats(req: Request, res: Response) {
+  const [total, byStatus, avgScoreResult] = await Promise.all([
+    prisma.lead.count(),
+    prisma.lead.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    }),
+    prisma.lead.aggregate({
+      _avg: { score: true },
+    }),
+  ])
+
+  const statusCounts: Record<string, number> = {
+    COLD: 0,
+    WARM: 0,
+    HOT: 0,
+    WON: 0,
+    LOST: 0,
+  }
+
+  byStatus.forEach((group) => {
+    statusCounts[group.status] = group._count.status
+  })
+
+  return res.status(200).json({
+    total,
+    byStatus: statusCounts,
+    averageScore: Math.round(avgScoreResult._avg.score || 0),
+  })
+}

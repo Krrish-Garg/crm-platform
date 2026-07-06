@@ -49,3 +49,15 @@ export async function updateLead(id: string, data: Partial<Lead>): Promise<{ lea
 export async function deleteLead(id: string): Promise<void> {
   await api.delete(`/leads/${id}`)
 }
+
+
+export interface LeadStats {
+  total: number
+  byStatus: Record<string, number>
+  averageScore: number
+}
+
+export async function getLeadStats(): Promise<LeadStats> {
+  const response = await api.get('/leads/stats')
+  return response.data
+}
