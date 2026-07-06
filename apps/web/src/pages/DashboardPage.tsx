@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../lib/axios'
 import { useAuthStore } from '../store/auth.store'
 
@@ -30,9 +30,17 @@ function DashboardPage() {
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-gray-600">Logged in as: {user?.email}</p>
         <p className="text-gray-600">Role: {user?.role}</p>
+
+        <Link
+          to="/leads"
+          className="inline-block mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          View Leads
+        </Link>
+
         <button
           onClick={handleLogout}
-          className="mt-4 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
+          className="mt-4 ml-2 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
         >
           Log out
         </button>
