@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getContacts, createContact, deleteContact, type Contact } from '../lib/contacts.api'
+import { getContacts, createContact, deleteContact } from '../lib/contacts.api'
 
 function ContactsPage() {
   const [page, setPage] = useState(1)
