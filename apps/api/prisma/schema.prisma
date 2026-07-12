@@ -81,6 +81,7 @@ model Lead {
   assignedTo   User?   @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@map("leads")
+  appointments Appointment[]
 }
 
 model Contact {
@@ -95,4 +96,24 @@ model Contact {
   updatedAt DateTime @updatedAt
 
   @@map("contacts")
+  appointments Appointment[]
+}
+
+model Appointment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@map("appointments")
 }
