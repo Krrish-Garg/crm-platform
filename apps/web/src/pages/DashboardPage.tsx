@@ -50,18 +50,24 @@ function DashboardPage() {
             <p className="text-gray-600">Welcome back, {user?.email}</p>
           </div>
           <div className="flex gap-2">
-            <Link
-              to="/leads"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              View Leads
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
-            >
-              Log out
-            </button>
+          <Link
+            to="/leads"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            View Leads
+          </Link>
+          <Link
+            to="/contacts"
+            className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+          >
+          View Contacts
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800"
+          >
+          Log out
+          </button>
           </div>
         </div>
 

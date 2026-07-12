@@ -5,6 +5,7 @@ import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import LeadsPage from './pages/LeadsPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import ContactsPage from './pages/ContactsPage'
 
 const queryClient = new QueryClient()
 
@@ -28,6 +29,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LeadsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contacts"
+            element={
+              <ProtectedRoute>
+                <ContactsPage />
               </ProtectedRoute>
             }
           />
