@@ -8,4 +8,5 @@ module.exports = {
     ...tsJestTransformCfg,
   },
   setupFiles: ["dotenv/config"],
+  testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 };
