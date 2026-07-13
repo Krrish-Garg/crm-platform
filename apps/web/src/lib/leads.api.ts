@@ -61,3 +61,8 @@ export async function getLeadStats(): Promise<LeadStats> {
   const response = await api.get('/leads/stats')
   return response.data
 }
+
+export async function generateLeadEmail(id: string): Promise<{ email: string }> {
+  const response = await api.post(`/leads/${id}/generate-email`)
+  return response.data
+}

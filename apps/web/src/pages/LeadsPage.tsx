@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import CreateLeadModal from '../components/CreateLeadModal'
+import GeneratedEmailModal from '../components/GeneratedEmailModal'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getLeads, updateLead, deleteLead, type Lead } from '../lib/leads.api'
+import { getLeads, updateLead, deleteLead, generateLeadEmail, type Lead } from '../lib/leads.api'
 
 function LeadsPage() {
   const [page, setPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [generatedEmail, setGeneratedEmail] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState('')
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['leads', { page, status: statusFilter, search }],
@@ -21,30 +25,48 @@ function LeadsPage() {
   })
   const queryClient = useQueryClient()
 
-const statusMutation = useMutation({
-  mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
-    updateLead(id, { status }),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['leads'] })
-  },
-})
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
+      updateLead(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
 
-const deleteMutation = useMutation({
-  mutationFn: deleteLead,
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['leads'] })
-  },
-})
+  const deleteMutation = useMutation({
+    mutationFn: deleteLead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
 
-function handleStatusChange(id: string, newStatus: Lead['status']) {
-  statusMutation.mutate({ id, status: newStatus })
-}
+  const emailMutation = useMutation({
+    mutationFn: generateLeadEmail,
+    onSuccess: (data) => {
+      setGeneratedEmail(data.email)
+      setEmailError('')
+    },
+    onError: () => {
+      setEmailError('Failed to generate email. Please try again.')
+    },
+  })
 
-function handleDelete(id: string, name: string) {
-  if (window.confirm(`Delete lead "${name}"? This cannot be undone.`)) {
-    deleteMutation.mutate(id)
+  function handleStatusChange(id: string, newStatus: Lead['status']) {
+    statusMutation.mutate({ id, status: newStatus })
   }
-}
+
+  function handleDelete(id: string, name: string) {
+    if (window.confirm(`Delete lead "${name}"? This cannot be undone.`)) {
+      deleteMutation.mutate(id)
+    }
+  }
+
+  function handleGenerateEmail(id: string) {
+    setGeneratedEmail(null)
+    setEmailError('')
+    setEmailModalOpen(true)
+    emailMutation.mutate(id)
+  }
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading leads...</div>
@@ -111,36 +133,42 @@ function handleDelete(id: string, name: string) {
             </tr>
           </thead>
           <tbody>
-  {data?.leads.map((lead) => (
-    <tr key={lead.id} className="border-t border-gray-100">
-      <td className="px-4 py-2 text-sm text-gray-900">{lead.name}</td>
-      <td className="px-4 py-2 text-sm text-gray-600">{lead.email}</td>
-      <td className="px-4 py-2 text-sm text-gray-600">{lead.company || '—'}</td>
-      <td className="px-4 py-2 text-sm">
-        <select
-          value={lead.status}
-          onChange={(e) => handleStatusChange(lead.id, e.target.value as Lead['status'])}
-          className="border border-gray-300 rounded px-2 py-1 text-sm"
-        >
-          <option value="COLD">Cold</option>
-          <option value="WARM">Warm</option>
-          <option value="HOT">Hot</option>
-          <option value="WON">Won</option>
-          <option value="LOST">Lost</option>
-        </select>
-      </td>
-      <td className="px-4 py-2 text-sm text-gray-600">{lead.score}</td>
-      <td className="px-4 py-2 text-sm">
-        <button
-          onClick={() => handleDelete(lead.id, lead.name)}
-          className="text-red-600 hover:text-red-800 text-sm"
-        >
-          Delete
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+            {data?.leads.map((lead) => (
+              <tr key={lead.id} className="border-t border-gray-100">
+                <td className="px-4 py-2 text-sm text-gray-900">{lead.name}</td>
+                <td className="px-4 py-2 text-sm text-gray-600">{lead.email}</td>
+                <td className="px-4 py-2 text-sm text-gray-600">{lead.company || '—'}</td>
+                <td className="px-4 py-2 text-sm">
+                  <select
+                    value={lead.status}
+                    onChange={(e) => handleStatusChange(lead.id, e.target.value as Lead['status'])}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  >
+                    <option value="COLD">Cold</option>
+                    <option value="WARM">Warm</option>
+                    <option value="HOT">Hot</option>
+                    <option value="WON">Won</option>
+                    <option value="LOST">Lost</option>
+                  </select>
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-600">{lead.score}</td>
+                <td className="px-4 py-2 text-sm">
+                  <button
+                    onClick={() => handleGenerateEmail(lead.id)}
+                    className="text-indigo-600 hover:text-indigo-800 text-sm mr-3"
+                  >
+                    ✨ AI Email
+                  </button>
+                  <button
+                    onClick={() => handleDelete(lead.id, lead.name)}
+                    className="text-red-600 hover:text-red-800 text-sm"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
 
         {data && (
@@ -169,6 +197,15 @@ function handleDelete(id: string, name: string) {
       </div>
 
       <CreateLeadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      {emailModalOpen && (
+        <GeneratedEmailModal
+          email={generatedEmail}
+          isLoading={emailMutation.isPending}
+          error={emailError}
+          onClose={() => setEmailModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
