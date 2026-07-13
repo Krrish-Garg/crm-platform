@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { createLeadSchema, updateLeadSchema } from '../validators/lead.validator'
-import { generateFollowUpEmail } from '../lib/openai'
+import { generateFollowUpEmail, analyzeLeadQuality } from '../lib/openai'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
@@ -184,5 +184,37 @@ export async function generateLeadEmail(req: Request, res: Response) {
   } catch (err) {
     console.error('OpenAI generation failed:', err)
     return res.status(502).json({ error: 'Failed to generate email. Please try again.' })
+  }
+}
+
+
+export async function analyzeLead(req: Request, res: Response) {
+  const id = req.params.id as string
+
+  const lead = await prisma.lead.findUnique({ where: { id } })
+  if (!lead) {
+    return res.status(404).json({ error: 'Lead not found' })
+  }
+
+  try {
+    const analysis = await analyzeLeadQuality({
+      leadName: lead.name,
+      company: lead.company,
+      source: lead.source,
+      status: lead.status,
+    })
+
+    const updatedLead = await prisma.lead.update({
+      where: { id },
+      data: { score: analysis.score },
+    })
+
+    return res.status(200).json({
+      lead: updatedLead,
+      reasoning: analysis.reasoning,
+    })
+  } catch (err) {
+    console.error('Lead analysis failed:', err)
+    return res.status(502).json({ error: 'Failed to analyze lead. Please try again.' })
   }
 }

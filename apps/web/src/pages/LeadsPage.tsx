@@ -2,7 +2,7 @@ import { useState } from 'react'
 import CreateLeadModal from '../components/CreateLeadModal'
 import GeneratedEmailModal from '../components/GeneratedEmailModal'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getLeads, updateLead, deleteLead, generateLeadEmail, type Lead } from '../lib/leads.api'
+import { getLeads, updateLead, deleteLead, generateLeadEmail, analyzeLead, type Lead } from '../lib/leads.api'
 
 function LeadsPage() {
   const [page, setPage] = useState(1)
@@ -51,6 +51,17 @@ function LeadsPage() {
     },
   })
 
+  const analyzeMutation = useMutation({
+    mutationFn: analyzeLead,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] })
+      alert(`New score: ${data.lead.score}\n\nReasoning: ${data.reasoning}`)
+    },
+    onError: () => {
+      alert('Failed to analyze lead. Please try again.')
+    },
+  })
+
   function handleStatusChange(id: string, newStatus: Lead['status']) {
     statusMutation.mutate({ id, status: newStatus })
   }
@@ -66,6 +77,10 @@ function LeadsPage() {
     setEmailError('')
     setEmailModalOpen(true)
     emailMutation.mutate(id)
+  }
+
+  function handleAnalyze(id: string) {
+    analyzeMutation.mutate(id)
   }
 
   if (isLoading) {
@@ -158,6 +173,13 @@ function LeadsPage() {
                     className="text-indigo-600 hover:text-indigo-800 text-sm mr-3"
                   >
                     ✨ AI Email
+                  </button>
+                  <button
+                    onClick={() => handleAnalyze(lead.id)}
+                    disabled={analyzeMutation.isPending}
+                    className="text-purple-600 hover:text-purple-800 text-sm mr-3 disabled:opacity-50"
+                  >
+                    📊 Analyze
                   </button>
                   <button
                     onClick={() => handleDelete(lead.id, lead.name)}
