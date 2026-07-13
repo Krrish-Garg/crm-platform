@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { createLeadSchema, updateLeadSchema } from '../validators/lead.validator'
+import { generateFollowUpEmail } from '../lib/openai'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
@@ -163,4 +164,25 @@ export async function getLeadStats(req: Request, res: Response) {
     byStatus: statusCounts,
     averageScore: Math.round(avgScoreResult._avg.score || 0),
   })
+}
+
+export async function generateLeadEmail(req: Request, res: Response) {
+  const id = req.params.id as string
+
+  const lead = await prisma.lead.findUnique({ where: { id } })
+  if (!lead) {
+    return res.status(404).json({ error: 'Lead not found' })
+  }
+
+  try {
+    const email = await generateFollowUpEmail({
+      leadName: lead.name,
+      company: lead.company,
+      status: lead.status,
+    })
+    return res.status(200).json({ email })
+  } catch (err) {
+    console.error('OpenAI generation failed:', err)
+    return res.status(502).json({ error: 'Failed to generate email. Please try again.' })
+  }
 }
