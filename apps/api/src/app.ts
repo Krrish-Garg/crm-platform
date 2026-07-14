@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes'
 import leadRoutes from './routes/lead.routes'
 import contactRoutes from './routes/contact.routes'
 import appointmentRoutes from './routes/appointment.routes'
+import notificationRoutes from './routes/notification.routes'
 
 const app = express()
 app.use(cors({
@@ -17,6 +18,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/leads', leadRoutes)
 app.use('/api/contacts', contactRoutes)
 app.use('/api/appointments', appointmentRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' })

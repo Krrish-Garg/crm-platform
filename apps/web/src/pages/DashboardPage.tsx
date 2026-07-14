@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, LineChart, L
 import api from '../lib/axios'
 import { getLeadStats, getLeadTrend } from '../lib/leads.api'
 import { useAuthStore } from '../store/auth.store'
+import NotificationBell from '../components/NotificationBell'
 
 const STATUS_COLORS: Record<string, string> = {
   COLD: '#60a5fa',
@@ -55,6 +56,7 @@ function DashboardPage() {
             <p className="text-gray-600">Welcome back, {user?.email}</p>
           </div>
           <div className="flex gap-2">
+          <NotificationBell />
             <Link
               to="/leads"
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
