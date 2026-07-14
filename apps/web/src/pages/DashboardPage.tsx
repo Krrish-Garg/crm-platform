@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import api from '../lib/axios'
-import { getLeadStats } from '../lib/leads.api'
+import { getLeadStats, getLeadTrend } from '../lib/leads.api'
 import { useAuthStore } from '../store/auth.store'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -22,6 +22,11 @@ function DashboardPage() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['leadStats'],
     queryFn: getLeadStats,
+  })
+
+  const { data: trendData } = useQuery({
+    queryKey: ['leadTrend'],
+    queryFn: getLeadTrend,
   })
 
   async function handleLogout() {
@@ -112,6 +117,21 @@ function DashboardPage() {
                 <p className="text-gray-400 text-sm">No leads yet</p>
               )}
             </div>
+          </div>
+        )}
+
+        {trendData && trendData.trend.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <h2 className="text-sm font-medium text-gray-500 mb-4">Lead Creation Trend</h2>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={trendData.trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>

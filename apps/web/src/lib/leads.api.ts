@@ -71,3 +71,13 @@ export async function analyzeLead(id: string): Promise<{ lead: Lead; reasoning: 
   const response = await api.post(`/leads/${id}/analyze`)
   return response.data
 }
+
+export interface TrendPoint {
+  month: string
+  count: number
+}
+
+export async function getLeadTrend(): Promise<{ trend: TrendPoint[] }> {
+  const response = await api.get('/leads/trend')
+  return response.data
+}
