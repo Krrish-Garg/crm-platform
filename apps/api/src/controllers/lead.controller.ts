@@ -218,3 +218,19 @@ export async function analyzeLead(req: Request, res: Response) {
     return res.status(502).json({ error: 'Failed to analyze lead. Please try again.' })
   }
 }
+
+export async function getLeadTrend(req: Request, res: Response) {
+  const trend = await prisma.$queryRaw<{ month: Date; count: bigint }[]>`
+    SELECT DATE_TRUNC('month', "createdAt") as month, COUNT(*) as count
+    FROM leads
+    GROUP BY month
+    ORDER BY month ASC
+  `
+
+  const formatted = trend.map((row) => ({
+    month: row.month.toISOString().slice(0, 7),
+    count: Number(row.count),
+  }))
+
+  return res.status(200).json({ trend: formatted })
+}
