@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { requireAuth } from '../middleware/auth.middleware'
 import { requireRole } from '../middleware/role.middleware'
 import { createLead, getLeads, getLeadById, updateLead, deleteLead, getLeadStats, generateLeadEmail, analyzeLead, getLeadTrend } from '../controllers/lead.controller'
+import { aiLimiter } from '../middleware/rateLimit.middleware'
 
 const router = Router()
 
@@ -12,7 +13,7 @@ router.get('/trend', requireAuth, getLeadTrend)
 router.get('/:id', requireAuth, getLeadById)
 router.patch('/:id', requireAuth, updateLead)
 router.delete('/:id', requireAuth, requireRole('ADMIN', 'MANAGER'), deleteLead)
-router.post('/:id/generate-email', requireAuth, generateLeadEmail)
-router.post('/:id/analyze', requireAuth, analyzeLead)
+router.post('/:id/generate-email', requireAuth, aiLimiter, generateLeadEmail)
+router.post('/:id/analyze', requireAuth, aiLimiter, analyzeLead)
 
 export default router

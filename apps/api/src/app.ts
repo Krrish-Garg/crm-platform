@@ -6,6 +6,7 @@ import contactRoutes from './routes/contact.routes'
 import appointmentRoutes from './routes/appointment.routes'
 import notificationRoutes from './routes/notification.routes'
 import searchRoutes from './routes/search.routes'
+import { generalLimiter } from './middleware/rateLimit.middleware'
 
 const app = express()
 app.use(cors({
@@ -15,6 +16,7 @@ app.use(cors({
   ],
 }))
 app.use(express.json())
+app.use(generalLimiter)
 app.use('/api/auth', authRoutes)
 app.use('/api/leads', leadRoutes)
 app.use('/api/contacts', contactRoutes)
