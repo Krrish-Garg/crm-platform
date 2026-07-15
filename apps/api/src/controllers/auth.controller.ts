@@ -2,8 +2,8 @@ import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
 import { PrismaClient } from '../generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { registerSchema, loginSchema, refreshSchema } from '../validators/auth.validator'
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../lib/jwt'
+import { registerSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema } from '../validators/auth.validator'
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, generateResetToken } from '../lib/jwt'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
@@ -148,4 +148,64 @@ export async function logout(req: Request, res: Response) {
   })
 
   return res.status(200).json({ message: 'Logged out successfully' })
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  const parsed = forgotPasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
+  }
+
+  const email = parsed.data.email.toLowerCase().trim()
+  const user = await prisma.user.findUnique({ where: { email } })
+
+  // Always return the same generic response, regardless of whether the user exists —
+  // same enumeration-protection principle as login.
+  if (!user) {
+    return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' })
+  }
+
+  const token = generateResetToken()
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+  await prisma.passwordResetToken.create({
+    data: { token, userId: user.id, expiresAt },
+  })
+
+  // In a real app, this token would be emailed, never returned directly.
+  // Returning it here only for local testing purposes.
+  return res.status(200).json({
+    message: 'If that email exists, a reset link has been sent.',
+    devToken: token,
+  })
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  const parsed = resetPasswordSchema.safeParse(req.body)
+  if (!parsed.success) {
+    return res.status(400).json({ errors: parsed.error.flatten().fieldErrors })
+  }
+
+  const { token, password } = parsed.data
+
+  const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } })
+
+  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+    return res.status(400).json({ error: 'Invalid or expired reset token' })
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { password: hashedPassword },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { usedAt: new Date() },
+    }),
+  ])
+
+  return res.status(200).json({ message: 'Password reset successfully' })
 }

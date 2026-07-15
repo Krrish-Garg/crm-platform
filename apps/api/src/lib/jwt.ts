@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!
@@ -13,4 +14,8 @@ export function generateRefreshToken(userId: string) {
 
 export function verifyRefreshToken(token: string) {
   return jwt.verify(token, REFRESH_SECRET) as { sub: string }
+}
+
+export function generateResetToken(): string {
+  return crypto.randomBytes(32).toString('hex')
 }
